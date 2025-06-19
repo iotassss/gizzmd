@@ -1,0 +1,545 @@
+openapi: 3.0.3
+info:
+  title: GizzMD API
+  description: API for managing documents with authentication and user preferences
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://api-staging.example.com/v1
+    description: Staging server
+
+paths:
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  token_type:
+                    type: string
+                    example: "Bearer"
+                  expires_in:
+                    type: integer
+                    example: 3600
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Logout user and invalidate access token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logout successful"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /docs:
+    get:
+      tags:
+        - Documents
+      summary: Get documents list
+      description: Retrieve paginated list of documents with filtering and sorting options
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            default: created_at
+            pattern: '^(created_at|updated_at|title)$'
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            default: desc
+            pattern: '^(asc|desc)$'
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated)
+          schema:
+            type: string
+            example: "tag1,tag2"
+        - name: created_from
+          in: query
+          description: Filter by creation date from (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:00:00Z"
+        - name: created_to
+          in: query
+          description: Filter by creation date to (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+            example: "2024-12-31T23:59:59Z"
+        - name: updated_from
+          in: query
+          description: Filter by last update date from (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:00:00Z"
+        - name: updated_to
+          in: query
+          description: Filter by last update date to (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+            example: "2024-12-31T23:59:59Z"
+      responses:
+        '200':
+          description: Documents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Documents
+      summary: Create new document
+      description: Create a new document
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "My New Document"
+                content:
+                  type: string
+                  description: Markdown content
+                  example: "# Welcome\n\nThis is my new document."
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["tutorial", "guide"]
+      responses:
+        '201':
+          description: Document created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /docs/{doc_id}:
+    get:
+      tags:
+        - Documents
+      summary: Get document by ID
+      description: Retrieve a specific document by its ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: doc_id
+          in: path
+          description: Document ID
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Document retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Documents
+      summary: Update document
+      description: Update document content and/or tags
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: doc_id
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "Updated Document Title"
+                content:
+                  type: string
+                  description: Markdown content
+                  example: "# Updated Content\n\nThis is the updated document."
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["updated", "guide"]
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Documents
+      summary: Delete document
+      description: Delete a specific document
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: doc_id
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '204':
+          description: Document deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user:
+    get:
+      tags:
+        - User
+      summary: Get user information
+      description: Retrieve current user information and preferences
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - User
+      summary: Update user preferences
+      description: Update user preferences including theme mode
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                theme_mode:
+                  type: string
+                  example: "dark"
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+
+    UserPreferences:
+      type: object
+      properties:
+        theme_mode:
+          type: string
+          example: "dark"
+          pattern: "^(light|dark)$"
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          example: "My Document"
+        content:
+          type: string
+          description: Markdown content
+          example: "# Welcome\n\nThis is my document content."
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["tutorial", "guide"]
+        author:
+          $ref: '#/components/schemas/User'
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+
+    DocumentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          example: "My Document"
+        preview:
+          type: string
+          description: First few lines of content for preview
+          example: "Welcome to my document..."
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["tutorial", "guide"]
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 5
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The provided username or password is incorrect"
+
+security:
+  - bearerAuth: []

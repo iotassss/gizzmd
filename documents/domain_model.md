@@ -1,0 +1,45 @@
+## User（ユーザー）
+- id
+    - PK
+    - UUID
+- email
+    - メールアドレス
+    - ユニーク制約
+- authorName
+    - 著者名
+    - 1-100文字
+    - 必須フィールド
+- uiTheme
+    - 'light' | 'dark'
+    - デフォルト: light
+
+## Doc（ドキュメント）
+- id
+    - PK
+    - UUID
+- title
+    - タイトル
+    - 1-100文字
+- content
+    - Markdownコンテンツ（テキスト）
+    - 空文字許可
+- tags
+    - タグ配列
+    - 各タグは1-50文字
+    - 重複禁止
+- snippet
+    - 概要（1-100文字）
+    - contentの冒頭100文字を保存する
+    - content保存時にここも更新する
+    - 一覧表示用
+- authorId
+    - 作成者ID（User.idへの外部キー）
+    - 必須フィールド
+- editedAt
+    - 最終編集日
+    - ビジネスロジックで更新する
+    - updatedAtとは別
+- createdAt
+    - 作成日
+- updatedAt
+    - DBによる自動更新
