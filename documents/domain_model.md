@@ -23,13 +23,14 @@
 - content
     - Markdownコンテンツ（テキスト）
     - 空文字許可
+    - 16MBまで
 - tags
     - タグ配列
     - 各タグは1-50文字
     - 重複禁止
 - snippet
     - 概要（1-100文字）
-    - contentの冒頭100文字を保存する
+    - contentの冒頭1行目から100文字を保存する
     - content保存時にここも更新する
     - 一覧表示用
 - authorId
