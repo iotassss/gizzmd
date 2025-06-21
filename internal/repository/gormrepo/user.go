@@ -68,11 +68,22 @@ func (r *UserRepository) Find(id domain.ID) (domain.User, error) {
 }
 
 func (r *UserRepository) Save(user domain.User) (domain.User, error) {
+	var existing UserModel
+	err := r.db.WithContext(r.ctx).First(&existing, "id = ?", user.ID().String()).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return domain.User{}, err
+	}
+
 	model := UserModel{
 		ID:         user.ID().String(),
 		Email:      user.Email().Value(),
 		AuthorName: user.AuthorName().Value(),
 		UITheme:    user.UITheme().Value(),
+	}
+	if err == nil {
+		model.CreatedAt = existing.CreatedAt
+		model.UpdatedAt = existing.UpdatedAt
+		model.DeletedAt = existing.DeletedAt
 	}
 
 	if err := r.db.WithContext(r.ctx).Save(&model).Error; err != nil {
@@ -82,7 +93,6 @@ func (r *UserRepository) Save(user domain.User) (domain.User, error) {
 		if errors.Is(err, gorm.ErrInvalidData) {
 			return domain.User{}, domain.ErrValidationFailed
 		}
-
 		return domain.User{}, err
 	}
 
@@ -97,4 +107,28 @@ func (r *UserRepository) Delete(id domain.ID) error {
 		return err
 	}
 	return nil
+}
+
+func (r *UserRepository) SeedDummyUser() error {
+	id, err := domain.NewID("123e4567-e89b-12d3-a456-426614174000")
+	if err != nil {
+		return err
+	}
+	err = r.Delete(id)
+	if err != nil {
+		return err
+	}
+
+	email, err := domain.NewEmail("user@example.com")
+	if err != nil {
+		return err
+	}
+	authorName, err := domain.NewAuthorName("John Doe")
+	if err != nil {
+		return err
+	}
+	uiTheme := domain.DefaultUITheme()
+	dummyUser := domain.NewUser(id, email, authorName, uiTheme)
+	_, err = r.Save(dummyUser)
+	return err
 }

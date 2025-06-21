@@ -1,7 +1,7 @@
 package domain
 
 type UserRepository interface {
-	Find(id ID) (Doc, error)
-	Save(doc Doc) error
+	Find(id ID) (User, error)
+	Save(user User) (User, error)
 	Delete(id ID) error
 }
