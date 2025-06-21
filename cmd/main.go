@@ -112,7 +112,6 @@ func main() {
 	// router
 	r := gin.Default()
 	// r.Static("/assets", "./static/dist/assets")
-	r.Static("/static", "./web/static")
 
 	// 認証不要なAPI
 	api := r.Group("/api")
@@ -134,8 +133,13 @@ func main() {
 		authorized.DELETE("/docs/:doc_id", docDeleteHandler)
 	}
 
+	// 静的ファイル（画像やsvgなど）を個別に配信
+	r.StaticFile("/vite.svg", "./frontend/dist/vite.svg")
+	r.Static("/assets", "./frontend/dist/assets") // 必要に応じて
+
+	// SPAルーティング
 	r.NoRoute(func(c *gin.Context) {
-		c.File("./frontend/build/index.html")
+		c.File("./frontend/dist/index.html")
 	})
 
 	r.Run() // デフォルトで :8080 で起動
