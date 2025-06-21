@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/iotassss/gizzmd/internal/domain"
@@ -10,13 +11,14 @@ import (
 )
 
 type GetDocResponse struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	Content  string `json:"content"`
-	Tags     string `json:"tags"`
-	Snippet  string `json:"snippet"`
-	AuthorID string `json:"author_id"`
-	EditedAt string `json:"edited_at"`
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	Tags      string `json:"tags"`
+	Snippet   string `json:"snippet"`
+	AuthorID  string `json:"author_id"`
+	CreatedAt string `json:"created_at"`
+	EditedAt  string `json:"edited_at"`
 }
 
 type UpdateDocRequest struct {
@@ -31,9 +33,108 @@ type CreateDocRequest struct {
 	Tags    string `json:"tags"`
 }
 
+type ListDocsResponse struct {
+	Documents  []DocumentSummary `json:"documents"`
+	Pagination PaginationInfo    `json:"pagination"`
+}
+
+type DocumentSummary struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Preview   string `json:"preview"`
+	Tags      string `json:"tags"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type PaginationInfo struct {
+	Page       int  `json:"page"`
+	Limit      int  `json:"limit"`
+	Total      int  `json:"total"`
+	TotalPages int  `json:"total_pages"`
+	HasNext    bool `json:"has_next"`
+	HasPrev    bool `json:"has_prev"`
+}
+
 func NewListDocsHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 実装例: クエリパラメータ取得・DB検索・レスポンス生成
+		docRepo := gormrepo.NewDocRepository(db, c.Request.Context())
+
+		page, err := domain.NewPage(1)
+		if pageStr := c.Query("page"); pageStr != "" {
+			if pageInt, err := strconv.Atoi(pageStr); err == nil && pageInt > 0 {
+				page, _ = domain.NewPage(pageInt)
+			}
+		}
+
+		limit, err := domain.NewLimit(20)
+		if limitStr := c.Query("limit"); limitStr != "" {
+			if limitInt, err := strconv.Atoi(limitStr); err == nil && limitInt > 0 && limitInt <= 100 {
+				limit, _ = domain.NewLimit(limitInt)
+			}
+		}
+
+		sortBy := domain.DefaultSortBy()
+		if sortByStr := c.Query("sort_by"); sortByStr != "" {
+			if sb, err := domain.NewSortBy(sortByStr); err == nil {
+				sortBy = sb
+			}
+		}
+
+		sortOrder := domain.DefaultSortOrder()
+		if sortOrderStr := c.Query("sort_order"); sortOrderStr != "" {
+			if so, err := domain.NewSortOrder(sortOrderStr); err == nil {
+				sortOrder = so
+			}
+		}
+
+		tags, _ := domain.NewTags(c.Query("tags"))
+
+		createdFrom, _ := domain.NewDateFilter(c.Query("created_from"))
+		createdTo, _ := domain.NewDateFilter(c.Query("created_to"))
+		createdRange, _ := domain.NewDateRange(createdFrom, createdTo)
+
+		updatedFrom, _ := domain.NewDateFilter(c.Query("updated_from"))
+		updatedTo, _ := domain.NewDateFilter(c.Query("updated_to"))
+		updatedRange, _ := domain.NewDateRange(updatedFrom, updatedTo)
+
+		query := domain.NewDocsQuery(page, limit, sortBy, sortOrder, tags, createdRange, updatedRange)
+
+		docs, total, err := docRepo.FindDocs(query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve documents"})
+			return
+		}
+
+		documentSummaries := make([]DocumentSummary, len(docs))
+		for i, doc := range docs {
+			documentSummaries[i] = DocumentSummary{
+				ID:        doc.ID().String(),
+				Title:     doc.Title().String(),
+				Preview:   doc.Snippet().String(),
+				Tags:      doc.Tags().String(),
+				CreatedAt: doc.CreatedAt().String(),
+				UpdatedAt: doc.EditedAt().String(),
+			}
+		}
+
+		totalPages := (total + limit.Value() - 1) / limit.Value()
+
+		pagination := PaginationInfo{
+			Page:       page.Value(),
+			Limit:      limit.Value(),
+			Total:      total,
+			TotalPages: totalPages,
+			HasNext:    page.Value() < totalPages,
+			HasPrev:    page.Value() > 1,
+		}
+
+		response := ListDocsResponse{
+			Documents:  documentSummaries,
+			Pagination: pagination,
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 
@@ -81,6 +182,7 @@ func NewCreateDocHandler(db *gorm.DB) gin.HandlerFunc {
 			tags,
 			snippet,
 			authorID,
+			domain.NewCreatedAtNow(),
 			domain.NewEditedAtNow(),
 		)
 		saved, err := docRepo.Save(doc)
@@ -90,13 +192,14 @@ func NewCreateDocHandler(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		resp := GetDocResponse{
-			ID:       saved.ID().String(),
-			Title:    saved.Title().String(),
-			Content:  saved.Content().String(),
-			Tags:     saved.Tags().String(),
-			Snippet:  saved.Snippet().String(),
-			AuthorID: saved.AuthorId().String(),
-			EditedAt: saved.EditedAt().String(),
+			ID:        saved.ID().String(),
+			Title:     saved.Title().String(),
+			Content:   saved.Content().String(),
+			Tags:      saved.Tags().String(),
+			Snippet:   saved.Snippet().String(),
+			AuthorID:  saved.AuthorId().String(),
+			CreatedAt: saved.CreatedAt().String(),
+			EditedAt:  saved.EditedAt().String(),
 		}
 		c.JSON(http.StatusCreated, resp)
 	}
@@ -120,13 +223,14 @@ func NewGetDocHandler(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		resp := GetDocResponse{
-			ID:       doc.ID().String(),
-			Title:    doc.Title().String(),
-			Content:  doc.Content().String(),
-			Tags:     doc.Tags().String(),
-			Snippet:  doc.Snippet().String(),
-			AuthorID: doc.AuthorId().String(),
-			EditedAt: doc.EditedAt().String(),
+			ID:        doc.ID().String(),
+			Title:     doc.Title().String(),
+			Content:   doc.Content().String(),
+			Tags:      doc.Tags().String(),
+			Snippet:   doc.Snippet().String(),
+			AuthorID:  doc.AuthorId().String(),
+			CreatedAt: doc.CreatedAt().String(),
+			EditedAt:  doc.EditedAt().String(),
 		}
 		c.JSON(http.StatusOK, resp)
 	}
@@ -170,6 +274,7 @@ func NewUpdateDocHandler(db *gorm.DB) gin.HandlerFunc {
 				doc.Tags(),
 				doc.Snippet(),
 				doc.AuthorId(),
+				doc.CreatedAt(),
 				domain.NewEditedAtNow(),
 			)
 		}
@@ -184,6 +289,7 @@ func NewUpdateDocHandler(db *gorm.DB) gin.HandlerFunc {
 				updatedDoc.Tags(),
 				snippet,
 				updatedDoc.AuthorId(),
+				updatedDoc.CreatedAt(),
 				domain.NewEditedAtNow(),
 			)
 		}
@@ -201,6 +307,7 @@ func NewUpdateDocHandler(db *gorm.DB) gin.HandlerFunc {
 				tags,
 				updatedDoc.Snippet(),
 				updatedDoc.AuthorId(),
+				updatedDoc.CreatedAt(),
 				domain.NewEditedAtNow(),
 			)
 		}
@@ -212,13 +319,14 @@ func NewUpdateDocHandler(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		resp := GetDocResponse{
-			ID:       saved.ID().String(),
-			Title:    saved.Title().String(),
-			Content:  saved.Content().String(),
-			Tags:     saved.Tags().String(),
-			Snippet:  saved.Snippet().String(),
-			AuthorID: saved.AuthorId().String(),
-			EditedAt: saved.EditedAt().String(),
+			ID:        saved.ID().String(),
+			Title:     saved.Title().String(),
+			Content:   saved.Content().String(),
+			Tags:      saved.Tags().String(),
+			Snippet:   saved.Snippet().String(),
+			AuthorID:  saved.AuthorId().String(),
+			CreatedAt: saved.CreatedAt().String(),
+			EditedAt:  saved.EditedAt().String(),
 		}
 		c.JSON(http.StatusOK, resp)
 	}

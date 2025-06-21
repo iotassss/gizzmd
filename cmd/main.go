@@ -88,6 +88,12 @@ func main() {
 			slog.Error("failed to seed dummy data", slog.Any("error", err))
 			return
 		}
+
+		docRepo := gormrepo.NewDocRepository(db, context.Background())
+		if err := docRepo.SeedDummyDocs(); err != nil {
+			slog.Error("failed to seed dummy document data", slog.Any("error", err))
+			return
+		}
 		slog.Info("dummy data seeded successfully")
 	}
 

@@ -1,13 +1,14 @@
 package domain
 
 type Doc struct {
-	id       ID
-	title    DocTitle
-	content  Content
-	tags     Tags
-	snippet  DocSnippet
-	authorId ID
-	editedAt EditedAt
+	id        ID
+	title     DocTitle
+	content   Content
+	tags      Tags
+	snippet   DocSnippet
+	authorId  ID
+	createdAt CreatedAt
+	editedAt  EditedAt
 }
 
 func NewDoc(
@@ -17,16 +18,18 @@ func NewDoc(
 	tags Tags,
 	snippet DocSnippet,
 	authorId ID,
+	createdAt CreatedAt,
 	editedAt EditedAt,
 ) Doc {
 	return Doc{
-		id:       id,
-		title:    title,
-		content:  content,
-		tags:     tags,
-		snippet:  snippet,
-		authorId: authorId,
-		editedAt: editedAt,
+		id:        id,
+		title:     title,
+		content:   content,
+		tags:      tags,
+		snippet:   snippet,
+		authorId:  authorId,
+		createdAt: createdAt,
+		editedAt:  editedAt,
 	}
 }
 
@@ -36,4 +39,5 @@ func (d Doc) Content() Content    { return d.content }
 func (d Doc) Tags() Tags          { return d.tags }
 func (d Doc) Snippet() DocSnippet { return d.snippet }
 func (d Doc) AuthorId() ID        { return d.authorId }
+func (d Doc) CreatedAt() CreatedAt { return d.createdAt }
 func (d Doc) EditedAt() EditedAt  { return d.editedAt }
