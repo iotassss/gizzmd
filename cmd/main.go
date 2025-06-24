@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/iotassss/gizzmd/internal/handler"
 	"github.com/iotassss/gizzmd/internal/middleware"
@@ -113,6 +115,16 @@ func main() {
 	r := gin.Default()
 	// r.Static("/assets", "./static/dist/assets")
 
+	// CORSミドルウェアを追加
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	// 認証不要なAPI
 	api := r.Group("/api")
 	{
@@ -133,14 +145,14 @@ func main() {
 		authorized.DELETE("/docs/:doc_id", docDeleteHandler)
 	}
 
-	// 静的ファイル（画像やsvgなど）を個別に配信
-	r.StaticFile("/vite.svg", "./frontend/dist/vite.svg")
-	r.Static("/assets", "./frontend/dist/assets") // 必要に応じて
+	// // 静的ファイル（画像やsvgなど）を個別に配信
+	// r.StaticFile("/vite.svg", "./frontend/dist/vite.svg")
+	// r.Static("/assets", "./frontend/dist/assets") // 必要に応じて
 
-	// SPAルーティング
-	r.NoRoute(func(c *gin.Context) {
-		c.File("./frontend/dist/index.html")
-	})
+	// // SPAルーティング
+	// r.NoRoute(func(c *gin.Context) {
+	// 	c.File("./frontend/dist/index.html")
+	// })
 
 	r.Run() // デフォルトで :8080 で起動
 }
