@@ -90,13 +90,37 @@ func NewListDocsHandler(db *gorm.DB) gin.HandlerFunc {
 
 		tags, _ := domain.NewTags(c.Query("tags"))
 
-		createdFrom, _ := domain.NewDateFilter(c.Query("created_from"))
-		createdTo, _ := domain.NewDateFilter(c.Query("created_to"))
-		createdRange, _ := domain.NewDateRange(createdFrom, createdTo)
+		createdFrom, err := domain.NewDateFilter(c.Query("created_from"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		createdTo, err := domain.NewDateFilter(c.Query("created_to"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		createdRange, err := domain.NewDateRange(createdFrom, createdTo)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 
-		updatedFrom, _ := domain.NewDateFilter(c.Query("updated_from"))
-		updatedTo, _ := domain.NewDateFilter(c.Query("updated_to"))
-		updatedRange, _ := domain.NewDateRange(updatedFrom, updatedTo)
+		updatedFrom, err := domain.NewDateFilter(c.Query("updated_from"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		updatedTo, err := domain.NewDateFilter(c.Query("updated_to"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		updatedRange, err := domain.NewDateRange(updatedFrom, updatedTo)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 
 		query := domain.NewDocsQuery(page, limit, sortBy, sortOrder, tags, createdRange, updatedRange)
 
