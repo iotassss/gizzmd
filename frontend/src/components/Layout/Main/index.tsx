@@ -5,12 +5,12 @@ import Header from "./Header";
 // Mainの雛形
 const Main: React.FC = () => {
   return (
-    <>
+    <div className="flex flex-col h-full">
       <Header />
-      <main style={{ flex: 1 }}>
+      <main className="flex-1 overflow-y-auto">
         <Outlet />
       </main>
-    </>
+    </div>
   );
 };
 

@@ -12,9 +12,14 @@ const Header: React.FC = () => {
         return 'ドキュメント一覧';
       case '/doc':
         return 'ドキュメント詳細';
+      case '/doc/:uuid':
+        return 'ドキュメント詳細';
       case '/mypage':
         return 'ユーザー設定';
       default:
+        if (/^\/doc\/[^/]+$/.test(pathname)) {
+          return 'ドキュメント詳細';
+        }
         return pathname.split('/').pop() || 'Page';
     }
   };

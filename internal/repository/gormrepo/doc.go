@@ -192,6 +192,8 @@ func (r *DocRepository) SeedDummyDocs() error {
 		content string
 		tags    string
 		snippet string
+		created time.Time
+		edited  time.Time
 	}{
 		{
 			idStr:   "11111111-1111-1111-1111-111111111111",
@@ -199,6 +201,8 @@ func (r *DocRepository) SeedDummyDocs() error {
 			content: "# ダミー内容1\nこれはテスト用のドキュメント1です。",
 			tags:    "test,dummy",
 			snippet: "ダミー内容1",
+			created: time.Date(2024, 12, 1, 10, 0, 0, 0, time.UTC),
+			edited:  time.Date(2024, 12, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			idStr:   "22222222-2222-2222-2222-222222222222",
@@ -206,6 +210,8 @@ func (r *DocRepository) SeedDummyDocs() error {
 			content: "# ダミー内容2\nこれはテスト用のドキュメント2です。",
 			tags:    "sample,check",
 			snippet: "ダミー内容2",
+			created: time.Date(2025, 1, 10, 9, 30, 0, 0, time.UTC),
+			edited:  time.Date(2025, 1, 15, 14, 0, 0, 0, time.UTC),
 		},
 		{
 			idStr:   "33333333-3333-3333-3333-333333333333",
@@ -213,6 +219,70 @@ func (r *DocRepository) SeedDummyDocs() error {
 			content: "# ダミー内容3\nこれはテスト用のドキュメント3です。",
 			tags:    "example,debug",
 			snippet: "ダミー内容3",
+			created: time.Date(2025, 2, 5, 8, 0, 0, 0, time.UTC),
+			edited:  time.Date(2025, 2, 6, 18, 0, 0, 0, time.UTC),
+		},
+		{
+			idStr:   "44444444-4444-4444-4444-444444444444",
+			title:   "プロジェクト要件定義書",
+			content: "# プロジェクト要件定義書\nこのドキュメントは新規Webアプリ開発プロジェクトの要件をまとめたものです。\n- 機能一覧\n- スケジュール\n- 担当者\n詳細は各セクションを参照してください。",
+			tags:    "要件定義,プロジェクト管理,仕様",
+			snippet: "新規Webアプリ開発の要件をまとめたドキュメントです。",
+			created: time.Date(2025, 3, 1, 11, 0, 0, 0, time.UTC),
+			edited:  time.Date(2025, 3, 10, 16, 0, 0, 0, time.UTC),
+		},
+		{
+			idStr:   "55555555-5555-5555-5555-555555555555",
+			title:   "API設計ガイドライン",
+			content: "# API設計ガイドライン\n本ガイドラインは社内システム向けREST APIの設計方針を記載しています。\n- エンドポイント命名規則\n- レスポンス形式\n- エラーハンドリング\n開発者は必ず遵守してください。",
+			tags:    "API,設計,ガイドライン,REST",
+			snippet: "社内向けREST API設計のためのガイドラインです。",
+			created: time.Date(2025, 4, 5, 13, 0, 0, 0, time.UTC),
+			edited:  time.Date(2025, 4, 20, 17, 0, 0, 0, time.UTC),
+		},
+		{
+			idStr: "66666666-6666-6666-6666-666666666666",
+			title: "2025年度上期KPIレポート",
+			content: `# 2025年度上期KPIレポート
+
+本レポートは2025年度上期（1月〜6月）の主要KPIの集計結果および分析をまとめたものです。
+
+## 1. サマリー
+2025年度上期は、売上・ユーザー数ともに前年同期比で増加傾向を維持しました。特に新規サービスの導入が奏功し、アクティブユーザー数が大幅に伸長しました。
+
+## 2. 売上推移
+- 1月: 1,200万円
+- 2月: 1,350万円
+- 3月: 1,500万円
+- 4月: 1,600万円
+- 5月: 1,700万円
+- 6月: 1,800万円
+前年同期比: +18.2%
+
+## 3. ユーザー数
+- 新規登録ユーザー: 8,200人（前年同期比+22%）
+- アクティブユーザー: 15,400人（前年同期比+19%）
+
+## 4. サービス稼働率
+- 平均稼働率: 99.97%
+- 重大障害件数: 0件
+
+## 5. 考察・今後の課題
+- 新規サービスの定着率向上施策が奏功
+- 既存ユーザーの離脱率がやや増加傾向のため、フォローアップ施策が必要
+- 次期は海外展開に向けた準備を強化予定
+
+## 6. 参考資料
+- [売上推移グラフ]
+- [ユーザー数推移グラフ]
+- [稼働率月次推移表]
+
+詳細データやグラフは添付資料を参照してください。
+`,
+			tags:    "KPI,レポート,分析,2025,業績,ユーザー,稼働率",
+			snippet: "2025年度上期のKPI集計・分析・考察を含む詳細レポートです。",
+			created: time.Date(2025, 6, 10, 8, 0, 0, 0, time.UTC),
+			edited:  time.Date(2025, 6, 20, 19, 0, 0, 0, time.UTC),
 		},
 	}
 
@@ -243,8 +313,8 @@ func (r *DocRepository) SeedDummyDocs() error {
 		if err != nil {
 			return err
 		}
-		createdAt := domain.NewCreatedAtNow()
-		editedAt := domain.NewEditedAtNow()
+		createdAt := domain.NewCreatedAt(d.created)
+		editedAt := domain.NewEditedAt(d.edited)
 		dummyDoc := domain.NewDoc(id, title, content, tags, snippet, authorId, createdAt, editedAt)
 		_, err = r.Save(dummyDoc)
 		if err != nil {

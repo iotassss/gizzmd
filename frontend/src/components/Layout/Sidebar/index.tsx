@@ -6,7 +6,7 @@ import Header from "./Header";
 // Sidebarの雛形
 const Sidebar: React.FC = () => {
   return (
-    <aside className="flex flex-col h-screen w-64 bg-lavender">
+    <aside className="flex flex-col h-full w-64 bg-lavender">
       <Header />
       <div className="flex-1 overflow-y-auto">
         <Menu />
