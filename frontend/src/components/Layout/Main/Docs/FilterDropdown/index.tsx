@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { DocumentFilters } from "../../../../../types/document";
 
+const FILTERS_STORAGE_KEY = "searchFilters";
+
 interface FilterDropdownProps {
   onFilterChange: (filters: Partial<DocumentFilters>) => void;
   currentFilters: DocumentFilters;
@@ -8,11 +10,26 @@ interface FilterDropdownProps {
 
 const FilterDropdown: React.FC<FilterDropdownProps> = ({ onFilterChange, currentFilters }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [sortBy, setSortBy] = useState(currentFilters.sort_by || 'created_at');
-  const [sortOrder, setSortOrder] = useState(currentFilters.sort_order || 'desc');
-  const [tags, setTags] = useState(currentFilters.tags || '');
-  const [createdFrom, setCreatedFrom] = useState('');
-  const [createdTo, setCreatedTo] = useState('');
+
+  // localStorageから初期値を取得
+  const getInitialFilters = () => {
+    const saved = localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved) as Partial<DocumentFilters>;
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  };
+  const initialFilters = { ...getInitialFilters(), ...currentFilters };
+
+  const [sortBy, setSortBy] = useState(initialFilters.sort_by || 'created_at');
+  const [sortOrder, setSortOrder] = useState(initialFilters.sort_order || 'desc');
+  const [tags, setTags] = useState(initialFilters.tags || '');
+  const [createdFrom, setCreatedFrom] = useState(initialFilters.created_from ? initialFilters.created_from.slice(0, 10) : '');
+  const [createdTo, setCreatedTo] = useState(initialFilters.created_to ? initialFilters.created_to.slice(0, 10) : '');
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -27,19 +44,26 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ onFilterChange, current
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // localStorageに保存
+  const saveFiltersToStorage = (filters: Partial<DocumentFilters>) => {
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+  };
+
   const formatDateToRFC3339 = (dateString: string): string => {
     if (!dateString) return "";
     return `${dateString}T00:00:00Z`;
   };
 
   const handleApplyFilters = () => {
-    onFilterChange({
+    const filters = {
       sort_by: sortBy,
       sort_order: sortOrder,
       tags: tags || undefined,
       created_from: createdFrom ? formatDateToRFC3339(createdFrom) : undefined,
       created_to: createdTo ? formatDateToRFC3339(createdTo) : undefined,
-    });
+    };
+    saveFiltersToStorage(filters);
+    onFilterChange(filters);
     setIsOpen(false);
   };
 
@@ -49,13 +73,15 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ onFilterChange, current
     setTags('');
     setCreatedFrom('');
     setCreatedTo('');
-    onFilterChange({
+    const cleared = {
       sort_by: 'created_at',
       sort_order: 'desc',
       tags: undefined,
       created_from: undefined,
       created_to: undefined,
-    });
+    };
+    saveFiltersToStorage(cleared);
+    onFilterChange(cleared);
   };
 
   const hasActiveFilters = tags || createdFrom || createdTo || sortBy !== 'created_at' || sortOrder !== 'desc';
