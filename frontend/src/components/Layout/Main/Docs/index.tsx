@@ -7,18 +7,29 @@ import FilterDropdown from "./FilterDropdown";
 import List from "./List";
 import Pagination from "./Pagination";
 
+const FILTERS_STORAGE_KEY = "searchFilters";
+
+const getInitialFilters = (): DocumentFilters => {
+  const saved = localStorage.getItem(FILTERS_STORAGE_KEY);
+  if (saved) {
+    try {
+      return { page: 1, limit: 10, ...JSON.parse(saved) };
+    } catch {
+      return { page: 1, limit: 10 };
+    }
+  }
+  return { page: 1, limit: 10 };
+};
+
 const Docs: React.FC = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<DocumentFilters>({
-    page: 1,
-    limit: 10,
-  });
+  const [filters, setFilters] = useState<DocumentFilters>(getInitialFilters());
 
   const { documents, loading, error, pagination, refetch } = useDocuments(filters);
   const { createDocument, loading: creating } = useCreateDocument();
 
   const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }));
+    setFilters((prev: DocumentFilters) => ({ ...prev, page }));
   };
 
   // phase2
@@ -28,7 +39,7 @@ const Docs: React.FC = () => {
   // };
 
   const handleFilterChange = (newFilters: Partial<DocumentFilters>) => {
-    setFilters(prev => {
+    setFilters((prev: DocumentFilters) => {
       const updated = { ...prev, ...newFilters, page: 1 };
       return updated;
     });
