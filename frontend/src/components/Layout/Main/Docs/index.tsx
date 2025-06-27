@@ -1,17 +1,21 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDocuments } from "../../../../hooks/useDocuments";
+import { useCreateDocument } from "../../../../hooks/useCreateDocument";
 import type { DocumentFilters } from "../../../../types/document";
-import FilterToolbar from "./FilterToolbar";
+import FilterDropdown from "./FilterDropdown";
 import List from "./List";
 import Pagination from "./Pagination";
 
 const Docs: React.FC = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<DocumentFilters>({
     page: 1,
-    limit: 4,
+    limit: 10,
   });
 
-  const { documents, loading, error, pagination } = useDocuments(filters);
+  const { documents, loading, error, pagination, refetch } = useDocuments(filters);
+  const { createDocument, loading: creating } = useCreateDocument();
 
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
@@ -30,20 +34,54 @@ const Docs: React.FC = () => {
     });
   };
 
+  const generateUniqueTitle = () => {
+    const existingTitles = documents.map(doc => doc.title);
+    let counter = 1;
+    let title = `No Title ${counter}`;
+
+    while (existingTitles.includes(title)) {
+      counter++;
+      title = `No Title ${counter}`;
+    }
+
+    return title;
+  };
+
+  const handleCreateDocument = async () => {
+    const title = generateUniqueTitle();
+
+    const result = await createDocument({
+      title,
+      content: '',
+      tags: '',
+    });
+
+    if (result) {
+      navigate(`/doc/${result.id}/edit`);
+    }
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="max-w-4xl mx-auto">
         {/* <SearchBar onSearch={handleSearch} /> */}
 
         <div className="mb-6 flex items-center justify-between">
-          <div className="relative">
-            <FilterToolbar 
-              onFilterChange={handleFilterChange}
-              currentFilters={filters}
-            />
-          </div>
-          <div className="text-sm text-gray-500">
-            {pagination.total} documents
+          <FilterDropdown
+            onFilterChange={handleFilterChange}
+            currentFilters={filters}
+          />
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleCreateDocument}
+              disabled={creating}
+              className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {creating ? 'Creating...' : '+ Add'}
+            </button>
+            <div className="text-sm text-gray-500">
+              {pagination.total} documents
+            </div>
           </div>
         </div>
 

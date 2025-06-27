@@ -122,7 +122,7 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({ onFilterChange, currentFi
   return (
     <div className="flex items-center space-x-3">
       {/* Sort Dropdown */}
-      <div className="relative" ref={el => dropdownRefs.current['sort'] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current['sort'] = el; }}>
         <DropdownButton
           name="sort"
           label="Sort"
@@ -162,7 +162,7 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({ onFilterChange, currentFi
       </div>
 
       {/* Date Dropdown */}
-      <div className="relative" ref={el => dropdownRefs.current['date'] = el}>
+      <div className="relative" ref={el => {dropdownRefs.current['date'] = el}}>
         <DropdownButton
           name="date"
           label="Date"
@@ -198,7 +198,7 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({ onFilterChange, currentFi
       </div>
 
       {/* Tags Dropdown */}
-      <div className="relative" ref={el => dropdownRefs.current['tags'] = el}>
+      <div className="relative" ref={el => {dropdownRefs.current['tags'] = el}}>
         <DropdownButton
           name="tags"
           label="Tags"

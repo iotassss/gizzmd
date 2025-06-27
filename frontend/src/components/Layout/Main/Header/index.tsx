@@ -17,7 +17,7 @@ const Header: React.FC = () => {
       case '/mypage':
         return 'ユーザー設定';
       default:
-        if (/^\/doc\/[^/]+$/.test(pathname)) {
+        if (/^\/doc\/[^/]+(\/(edit|preview))?$/.test(pathname)) {
           return 'ドキュメント詳細';
         }
         return pathname.split('/').pop() || 'Page';

@@ -65,8 +65,8 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ onFilterChange, current
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center space-x-2 px-4 py-2 border rounded-full text-sm font-medium transition-colors ${
-          hasActiveFilters 
-            ? 'border-blue-600 text-blue-600 bg-blue-50' 
+          hasActiveFilters
+            ? 'border-blue-600 text-blue-600 bg-blue-50'
             : 'border-gray-300 text-gray-700 hover:border-gray-400'
         }`}
       >
