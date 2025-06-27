@@ -9,6 +9,7 @@ import DocPreview from './components/Layout/Main/DocPreview'
 import MyPage from './components/Layout/Main/MyPage'; // 必要に応じて作成
 import Welcome from './components/Welcome';
 import DocSearch from './components/Layout/Main/DocSearch'
+import Settings from './components/Layout/Main/Settings'
 import Login from './components/Login'
 import PrivateRoute from './components/PrivateRoute'
 
@@ -30,6 +31,7 @@ function App() {
           <Route path="doc/:uuid/preview" element={<DocPreview />} />
           <Route path="doc/" element={<DocSearch />} />
           <Route path="mypage" element={<MyPage />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </AuthProvider>

@@ -48,19 +48,32 @@ const DocEdit: React.FC = () => {
     }
   }, [title, content, tags, document]);
 
-  const handleSave = async () => {
+  const saveOnly = async () => {
     if (!uuid || !hasChanges) return;
-
-    const result = await updateDocument(uuid, {
+    await updateDocument(uuid, {
       title: title.trim(),
       content,
       tags: tags.trim(),
     });
-
-    if (result) {
-      navigate(`/doc/${uuid}`);
-    }
   };
+
+  const handleSave = async () => {
+    await saveOnly();
+    navigate(`/doc/${uuid}`);
+  };
+
+  // TODO: 保存時にタブのcautionが消えるようにする。セーブボタンも無効化する
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 's') {
+        e.preventDefault();
+        saveOnly();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [uuid, hasChanges, title, content, tags]);
 
   const handleCancel = () => {
     navigate(`/doc/${uuid}`);

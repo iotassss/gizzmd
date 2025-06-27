@@ -32,7 +32,7 @@ const Menu: React.FC = () => (
       </li>
       <li>
         <Link
-          to="/mypage"
+          to="/settings"
           className="flex items-center space-x-3 p-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white transition-all duration-200 group"
         >
           <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-pink-600 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform">
